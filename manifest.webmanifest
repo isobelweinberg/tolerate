@@ -1,0 +1,15 @@
+{
+  "name": "TolerATE",
+  "short_name": "TolerATE",
+  "description": "Log progress on allergen ladders and OIT, shared between parents.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1f4bff",
+  "theme_color": "#1f4bff",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
