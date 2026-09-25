@@ -113,7 +113,7 @@ export function BulkAdd({ allergen, foods, entries, act, name, toast, onClose })
                   onClick=${() => setRows((rs) => rs.filter((_, j) => j !== i))}>${closeIcon()}</button>`}
               </div>
               <${AmountInput} food=${food} value=${r.amount} compact
-                placeholder=${lastAmountText(entries, food) || "Amount"}
+                placeholder=${lastAmountText(entries, food) ? `last: ${lastAmountText(entries, food)}` : "Amount"}
                 onInput=${(a) => change(i, { amount: a })} />
               ${mg != null && html`<span class="hint strong-pink">${formatMg(mg)} protein</span>`}
               <input class="note-input" value=${r.note} placeholder="Reaction (optional)"
