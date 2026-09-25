@@ -16,11 +16,15 @@ export function useSheetSync(code, data, name) {
   const latest = useRef({ data, name });
   latest.current = { data, name };
 
-  // Is a sheet set up for this household? (Not when running locally.)
+  // Is a sheet set up for this household? (Not when running locally.) If this
+  // phone has never filled this sheet (e.g. it was only just connected), do so now.
   useEffect(() => {
     if (LOCAL_MODE) return;
     post({ code, action: "status" })
-      .then((r) => setStatus((s) => ({ ...s, enabled: !!r.enabled, sheetUrl: r.sheetUrl })))
+      .then((r) => {
+        if (r.enabled && storage.get("sheetFilled") !== r.sheetUrl) dirty.current = true;
+        setStatus((s) => ({ ...s, enabled: !!r.enabled, sheetUrl: r.sheetUrl }));
+      })
       .catch(() => {});
   }, [code]);
 
@@ -33,7 +37,10 @@ export function useSheetSync(code, data, name) {
     try {
       await post({ code, action: "write", by: name, updated: new Date().toLocaleString("en-GB"), ...sheetContent(data) });
       if (!dirty.current) storage.set("sheetDirty", null);
-      setStatus((s) => ({ ...s, state: "done", at: Date.now() }));
+      setStatus((s) => {
+        storage.set("sheetFilled", s.sheetUrl);
+        return { ...s, state: "done", at: Date.now() };
+      });
     } catch (err) {
       dirty.current = true;
       setStatus((s) => ({ ...s, state: "error", error: navigator.onLine ? err.message : "Offline: will update when back online" }));
