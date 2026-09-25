@@ -42,7 +42,11 @@ module.exports = async function handler(req, res) {
     const body = readBody(req);
     const allowed = configured && body.code === code;
     if (body.action === "status") {
-      return res.status(200).json(allowed ? { enabled: true, publicKey: env.VAPID_PUBLIC_KEY } : { enabled: false });
+      if (allowed) return res.status(200).json({ enabled: true, publicKey: env.VAPID_PUBLIC_KEY });
+      // Say what's wrong (names only, never values) so it can be fixed.
+      const missing = ["GOOGLE_SERVICE_ACCOUNT", "HOUSEHOLD_CODE", "VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY", "CRON_SECRET"]
+        .filter((name) => !env[name]);
+      return res.status(200).json({ enabled: false, missing, codeMismatch: !missing.includes("HOUSEHOLD_CODE") && body.code !== code });
     }
     if (!allowed) return res.status(403).json({ error: "Reminders aren't set up for this household" });
     if (body.action === "test") {

@@ -36,6 +36,14 @@ function keyBytes(base64url) {
   return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 }
 
+// Why the server says reminders aren't ready, in words that point at the fix.
+function notReadyReason({ missing = [], codeMismatch, error }) {
+  if (error) return `Couldn't reach the reminder service (${error}). Check the latest deployment in Vercel says Ready.`;
+  if (missing.length) return `Not set up yet: add ${missing.join(", ")} in Vercel → Settings → Environment Variables, then redeploy.`;
+  if (codeMismatch) return "HOUSEHOLD_CODE in Vercel doesn't match this share code.";
+  return "Not set up yet for this share code. See SETUP_GUIDE.md.";
+}
+
 const deviceRecord = (sub, name) => ({ subscription: sub.toJSON(), name: name || null, enabled: true, updatedAt: Date.now() });
 
 // When the app opens, re-save this phone's subscription if the browser has renewed it.
@@ -59,7 +67,7 @@ export function ReminderCard({ code, name, devices }) {
 
   useEffect(() => {
     if (!available) return;
-    post({ code, action: "status" }).then(setServer).catch(() => setServer({ enabled: false }));
+    post({ code, action: "status" }).then(setServer).catch((err) => setServer({ enabled: false, error: err.message }));
   }, [code]);
 
   const turnOn = async () => {
@@ -113,7 +121,7 @@ export function ReminderCard({ code, name, devices }) {
   if (LOCAL_MODE || onLocalhost()) body = html`<p class="muted small">Not available while running locally.</p>`;
   else if (!supported()) body = html`<p class="muted small">This browser can't show notifications. On Android, use Chrome.</p>`;
   else if (!server) body = html`<p class="muted small">Checking…</p>`;
-  else if (!server.enabled) body = html`<p class="muted small">Not set up yet for this share code. See SETUP_GUIDE.md.</p>`;
+  else if (!server.enabled) body = html`<p class="muted small">${notReadyReason(server)}</p>`;
   else {
     body = html`
       <label class="toggle">
