@@ -3,6 +3,25 @@
 import { html, useState, useEffect, useRef } from "./lib.js";
 import { PROPORTIONS, SCALES, dayKey, parseDay, unitOf } from "./util.js";
 
+// Track the part of the screen the on-screen keyboard leaves visible, so
+// sheets can shrink to fit above it (CSS uses --vv-height and --vv-top).
+const viewport = window.visualViewport;
+if (viewport) {
+  const update = () => {
+    document.documentElement.style.setProperty("--vv-height", `${viewport.height}px`);
+    document.documentElement.style.setProperty("--vv-top", `${viewport.offsetTop}px`);
+  };
+  viewport.addEventListener("resize", update);
+  viewport.addEventListener("scroll", update);
+  update();
+}
+
+// When a box in a sheet is tapped, bring it to the middle once the keyboard has opened.
+const centreField = (e) => {
+  if (!e.target.matches("input, textarea, select")) return;
+  setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 350);
+};
+
 // Open sheets, top last: Escape closes only the top one, and the page behind
 // stays still while any are open.
 const openSheets = [];
@@ -27,7 +46,7 @@ export function Sheet({ title, onClose, children, wide = false }) {
           <h2>${title}</h2>
           <button class="icon-btn" onClick=${onClose} aria-label="Close">${closeIcon()}</button>
         </div>
-        <div class="sheet-body">${children}</div>
+        <div class="sheet-body" onfocusin=${centreField}>${children}</div>
       </div>
     </div>`;
 }
