@@ -65,6 +65,15 @@ export function BulkAdd({ allergen, foods, entries, act, name, toast, onClose })
   const problems = rows.map(problem);
   const canAdd = filled.length > 0 && problems.every((p) => !p);
 
+  // The hint for a line's amount: the nearest amount typed above for the same
+  // food, otherwise the last amount given in History.
+  const amountHint = (i) => {
+    for (let j = i - 1; j >= 0; j--) {
+      if (rows[j].foodId === rows[i].foodId && parseNum(rows[j].amount) != null) return rows[j].amount.trim();
+    }
+    return lastAmountText(entries, foodOf(rows[i]));
+  };
+
   // The calendar opens on the nearest date above this line (or this line's own).
   const calendarStart = (i) => {
     for (let j = i - 1; j >= 0; j--) if (rows[j].date) return rows[j].date;
@@ -113,7 +122,7 @@ export function BulkAdd({ allergen, foods, entries, act, name, toast, onClose })
                   onClick=${() => setRows((rs) => rs.filter((_, j) => j !== i))}>${closeIcon()}</button>`}
               </div>
               <${AmountInput} food=${food} value=${r.amount} compact
-                placeholder=${lastAmountText(entries, food) ? `last: ${lastAmountText(entries, food)}` : "Amount"}
+                placeholder=${amountHint(i) ? `last: ${amountHint(i)}` : "Amount"}
                 onInput=${(a) => change(i, { amount: a })} />
               ${mg != null && html`<span class="hint strong-pink">${formatMg(mg)} protein</span>`}
               <input class="note-input" value=${r.note} placeholder="Reaction (optional)"
