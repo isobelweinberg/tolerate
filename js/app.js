@@ -10,6 +10,7 @@ import { HistoryPanel } from "./history.js";
 import { FoodsPanel } from "./foods.js";
 import { BulkAdd } from "./bulk.js";
 import { SettingsScreen, ChildForm } from "./settings.js";
+import { refreshReminder } from "./reminders.js";
 import { Sheet, Segmented, useToast } from "./ui.js";
 
 // ---------------------------------------------------------------------------
@@ -105,10 +106,17 @@ function Household({ code, name, onLeave, onRename }) {
     removeMany: (items) => { sync.markDirty(); hh.removeMany(items, onError); },
   }), [hh, sync.markDirty]);
 
+  // Phones signed up for the daily reminder. Not part of the Sheet, so no markDirty.
+  const devices = useMemo(() => ({
+    save: (id, value) => hh.set("devices", id, value, onError),
+    remove: (id) => hh.removeMany([{ col: "devices", id }], onError),
+  }), [hh]);
+  useEffect(() => { refreshReminder(code, devices, name); }, [devices]);
+
   if (error) return html`<${ErrorScreen} error=${error} onLeave=${onLeave} />`;
   if (!data) return html`<div class="boot"><${Logo} big /></div>`;
 
-  return html`<${Main} code=${code} name=${name} data=${data} act=${act} sync=${sync}
+  return html`<${Main} code=${code} name=${name} data=${data} act=${act} sync=${sync} devices=${devices}
     toast=${toast} onLeave=${onLeave} onRename=${onRename} />${toastView}`;
 }
 
@@ -145,7 +153,7 @@ const wheelSideways = (e) => {
   if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.currentTarget.scrollLeft += e.deltaY;
 };
 
-function Main({ code, name, data, act, sync, toast, onLeave, onRename }) {
+function Main({ code, name, data, act, sync, devices, toast, onLeave, onRename }) {
   const [screen, setScreen] = useState("home"); // home | settings
   const [childId, setChildIdState] = useState(() => storage.get("child"));
   const [allergenId, setAllergenId] = useState(null);
@@ -173,7 +181,7 @@ function Main({ code, name, data, act, sync, toast, onLeave, onRename }) {
   const entries = useMemo(() => (allergen ? entriesOf(data, allergen.id) : []), [data.entries, allergen?.id]);
 
   if (screen === "settings") {
-    return html`<div class="shell"><${SettingsScreen} code=${code} name=${name} data=${data} act=${act} sync=${sync}
+    return html`<div class="shell"><${SettingsScreen} code=${code} name=${name} data=${data} act=${act} sync=${sync} devices=${devices}
       toast=${toast} onRename=${onRename} onLeave=${onLeave} onBack=${() => setScreen("home")} /></div>`;
   }
 

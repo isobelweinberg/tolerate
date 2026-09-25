@@ -89,6 +89,41 @@ each change (and catches up after being offline). You can delete the empty
 
 ---
 
+## Part 5 (optional): the daily noon reminder (Android)
+
+At noon, each phone that has turned it on gets a notification listing any
+allergens with nothing logged today (maintenance ones included), e.g.
+"Sam: Peanut, Sesame". If everything's logged, nothing is sent.
+
+Do Part 4 first: this uses the same service account and `HOUSEHOLD_CODE`.
+
+1. **Let the service account read the database.** In
+   [Google Cloud → IAM](https://console.cloud.google.com/iam-admin/iam?project=tolerate-75e26),
+   click **Grant access**, paste the service account's email, give it the role
+   **Cloud Datastore User**, and click **Save**.
+2. **Update the Firestore rules.** Paste the current `firestore.rules` into
+   **Firestore Database → Rules** and click **Publish**. (It now allows a `devices` collection.)
+3. **Add these environment variables in Vercel.** The values are generated for you;
+   Claude gives you them separately. They're secrets, so don't put them in GitHub.
+
+   | Name | Value |
+   |---|---|
+   | `VAPID_PUBLIC_KEY` | the public key |
+   | `VAPID_PRIVATE_KEY` | the private key |
+   | `CRON_SECRET` | the long random text |
+
+   Then **Redeploy**.
+4. **On each phone that wants reminders:** open the app from the home screen →
+   **Settings → Daily reminder** → switch on **Remind me at noon** → **Allow**
+   notifications. Tap **Send a test notification** to check it works.
+
+**Timing:** Vercel's free plan runs daily jobs at some point within the hour
+they're scheduled for. The job runs at 11:00 and 12:00 UTC and only sends
+during the 12 o'clock hour in London, so the reminder arrives between 12:00
+and 13:00, in both summer and winter time.
+
+---
+
 ## Costs: when would you pay?
 
 At a few users you stay comfortably inside the free tiers:

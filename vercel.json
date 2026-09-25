@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/remind", "schedule": "0 11 * * *" },
+    { "path": "/api/remind", "schedule": "0 12 * * *" }
+  ]
+}

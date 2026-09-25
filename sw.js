@@ -2,13 +2,13 @@
 // Our own files are fetched fresh when online (so updates arrive straight away);
 // the pinned library files from CDNs never change, so the saved copy is used.
 
-const CACHE = "tolerate-v4";
+const CACHE = "tolerate-v5";
 const SHELL = [
   "/", "/index.html", "/css/styles.css", "/manifest.webmanifest",
   "/js/app.js", "/js/lib.js", "/js/db.js", "/js/firebase-config.js", "/js/sync.js", "/js/model.js",
   "/js/util.js", "/js/icons.js", "/js/ui.js", "/js/log.js", "/js/history.js", "/js/bulk.js",
-  "/js/foods.js", "/js/allergens.js", "/js/settings.js",
-  "/icons/icon.svg", "/icons/icon-192.png",
+  "/js/foods.js", "/js/allergens.js", "/js/settings.js", "/js/reminders.js",
+  "/icons/icon.svg", "/icons/icon-192.png", "/icons/badge-96.png",
 ];
 const CDN_HOSTS = ["cdn.jsdelivr.net", "www.gstatic.com", "fonts.googleapis.com", "fonts.gstatic.com"];
 
@@ -56,3 +56,28 @@ async function cacheFirst(req) {
   if (res.ok || res.type === "opaque") cache.put(req, res.clone());
   return res;
 }
+
+// --- The daily reminder ----------------------------------------------------------
+
+self.addEventListener("push", (event) => {
+  let message = {};
+  try { message = event.data?.json() ?? {}; } catch { message = { body: event.data?.text() }; }
+  event.waitUntil(self.registration.showNotification(message.title || "TolerATE", {
+    body: message.body || "",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/badge-96.png",
+    tag: message.tag || "tolerate",
+    renotify: true,
+  }));
+});
+
+// Tapping the notification opens the app (or brings it to the front).
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const open = windows.find((w) => new URL(w.url).origin === self.location.origin);
+    if (open) return open.focus();
+    return self.clients.openWindow("/");
+  })());
+});

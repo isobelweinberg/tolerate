@@ -5,6 +5,7 @@
 //   households/{code}/allergens/{id}  { childId, name, icon, maintenance, createdAt }
 //   households/{code}/foods/{id}      { allergenId, name, scale, unit, proteinPct, createdAt }
 //   households/{code}/entries/{id}    { allergenId, foodId, amount, date, time, note, by, clientTime }
+//   households/{code}/devices/{id}    { subscription, name, enabled, updatedAt }  <- phones with the daily reminder on
 //
 // Until js/firebase-config.js is filled in, the app runs in "local mode" and
 // keeps everything in this browser only (handy for trying it out). Adding
@@ -40,6 +41,7 @@ export function household(code) {
       hh.then((h) => h.set(col, id, data)).catch(onError);
       return id;
     },
+    set: (col, id, data, onError) => hh.then((h) => h.set(col, id, data)).catch(onError),
     update: (col, id, patch, onError) => hh.then((h) => h.update(col, id, patch)).catch(onError),
     // items: [{ col, id }]
     removeMany: (items, onError) => hh.then((h) => h.removeMany(items)).catch(onError),

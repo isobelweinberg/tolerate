@@ -11,7 +11,7 @@
 // Tabs this function creates are tagged (developer metadata "tolerate" = key),
 // so it can rename, reorder and remove its own tabs without touching any others.
 
-const { createSign } = require("node:crypto");
+const { accessToken, readBody } = require("./_google");
 
 const API = "https://sheets.googleapis.com/v4/spreadsheets";
 const TAG = "tolerate";
@@ -21,7 +21,7 @@ const SUMMARY_TITLE = "TolerATE summary";
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
   const { GOOGLE_SERVICE_ACCOUNT, SHEET_ID, HOUSEHOLD_CODE } = process.env;
-  const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
+  const body = readBody(req);
   const configured = !!(GOOGLE_SERVICE_ACCOUNT && SHEET_ID && HOUSEHOLD_CODE);
   const allowed = configured && body.code === HOUSEHOLD_CODE.trim().toUpperCase();
 
@@ -35,7 +35,7 @@ module.exports = async function handler(req, res) {
   if (body.action !== "write" || !Array.isArray(body.tabs)) return res.status(400).json({ error: "Bad request" });
 
   try {
-    const token = await accessToken(JSON.parse(GOOGLE_SERVICE_ACCOUNT));
+    const token = await accessToken(JSON.parse(GOOGLE_SERVICE_ACCOUNT), "https://www.googleapis.com/auth/spreadsheets");
     await writeSheet(token, SHEET_ID, body);
     res.status(200).json({ ok: true });
   } catch (err) {
@@ -43,32 +43,6 @@ module.exports = async function handler(req, res) {
     res.status(500).json({ error: err.message });
   }
 };
-
-// --- Google auth: a signed JWT swapped for an access token ------------------------
-
-async function accessToken(account) {
-  const now = Math.floor(Date.now() / 1000);
-  const enc = (obj) => Buffer.from(JSON.stringify(obj)).toString("base64url");
-  const unsigned = `${enc({ alg: "RS256", typ: "JWT" })}.${enc({
-    iss: account.client_email,
-    scope: "https://www.googleapis.com/auth/spreadsheets",
-    aud: "https://oauth2.googleapis.com/token",
-    iat: now,
-    exp: now + 3600,
-  })}`;
-  const signature = createSign("RSA-SHA256").update(unsigned).sign(account.private_key, "base64url");
-  const res = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: `${unsigned}.${signature}`,
-    }),
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(`Google sign-in failed: ${json.error_description || json.error}`);
-  return json.access_token;
-}
 
 async function api(token, path, { method = "GET", body } = {}) {
   const res = await fetch(API + path, {

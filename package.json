@@ -1,0 +1,8 @@
+{
+  "name": "tolerate",
+  "private": true,
+  "description": "The app itself needs no build step; this only lists what the Vercel functions in api/ use.",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}

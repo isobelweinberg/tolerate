@@ -5,9 +5,10 @@ import { Sheet, StrongDelete, ConfirmButton, useFocus } from "./ui.js";
 import { childCascade, allergensOf } from "./model.js";
 import { ReorderList } from "./allergens.js";
 import { LOCAL_MODE } from "./db.js";
+import { ReminderCard } from "./reminders.js";
 import { byNewest, dayKey, entryRow, ENTRY_HEADER, toCsv } from "./util.js";
 
-export function SettingsScreen({ code, name, data, act, sync, onRename, onLeave, onBack, toast }) {
+export function SettingsScreen({ code, name, data, act, sync, devices, onRename, onLeave, onBack, toast }) {
   const [editingChild, setEditingChild] = useState(null); // a child, or "new"
   const [deletingChild, setDeletingChild] = useState(null);
 
@@ -49,6 +50,8 @@ export function SettingsScreen({ code, name, data, act, sync, onRename, onLeave,
         <p class="muted small">Saved with each entry you record, so others can see who logged it.</p>
         <input value=${name} onChange=${(e) => onRename(e.target.value.trim())} placeholder="e.g. Mum" />
       </section>
+
+      <${ReminderCard} code=${code} name=${name} devices=${devices} />
 
       <section class="card">
         <h3>Share code</h3>
