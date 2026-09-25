@@ -1,24 +1,59 @@
 // Bulk add: several past entries at once, each with a date (no time).
 
-import { html, useState } from "./lib.js";
+import { html, useState, useEffect, useRef } from "./lib.js";
 import { Sheet, AmountInput, Calendar, closeIcon } from "./ui.js";
 import { FoodSelect } from "./log.js";
 import { defaultFoodId, lastAmountText } from "./model.js";
 import { cleanAmount, formatDay, formatMg, parseNum, proteinMg } from "./util.js";
 
 let nextRow = 0;
-const blankRow = (foodId) => ({ key: nextRow++, date: "", foodId, amount: "", note: "" });
+// `foodSet` marks a line whose food was chosen by hand, so it isn't overwritten.
+const blankRow = (foodId) => ({ key: nextRow++, date: "", foodId, foodSet: false, amount: "", note: "" });
 
 export function BulkAdd({ allergen, foods, entries, act, name, toast, onClose }) {
   const firstFood = defaultFoodId(foods, entries);
   const [rows, setRows] = useState(() => Array.from({ length: 5 }, () => blankRow(firstFood)));
   const [picking, setPicking] = useState(null); // index of the row choosing a date
   const [tried, setTried] = useState(false);
+  const [focusKey, setFocusKey] = useState(null); // a line to bring into view
+  const list = useRef();
 
   const change = (i, patch) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   const foodOf = (r) => foods.find((f) => f.id === r.foodId);
 
   const isBlank = (r) => !r.date && r.amount.trim() === "" && !r.note.trim();
+
+  // Choosing a food also sets it on the empty lines below that haven't had one chosen.
+  const chooseFood = (i, id) => setRows((rs) => rs.map((r, j) => {
+    const sameScale = foodOf({ foodId: id })?.scale === foodOf(r)?.scale;
+    if (j === i) return { ...r, foodId: id, foodSet: true, amount: sameScale ? r.amount : "" };
+    if (j > i && isBlank(r) && !r.foodSet) return { ...r, foodId: id };
+    return r;
+  }));
+
+  // New lines start with the food of the line above.
+  const addLine = () => {
+    const row = blankRow(rows[rows.length - 1]?.foodId ?? firstFood);
+    setRows((rs) => [...rs, row]);
+    setFocusKey({ key: row.key, focus: false });
+  };
+
+  const pickDate = (i, date) => {
+    change(i, { date });
+    setPicking(null);
+    setFocusKey({ key: rows[i].key, focus: rows[i].amount === "" });
+  };
+
+  // Scroll the line being worked on into the middle of the sheet, and put the
+  // cursor in its amount if that's the next thing to fill in.
+  useEffect(() => {
+    if (!focusKey) return;
+    const li = list.current?.querySelector(`[data-key="${focusKey.key}"]`);
+    if (!li) return;
+    li.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (focusKey.focus) li.querySelector(".amount-input input")?.focus({ preventScroll: true });
+    setFocusKey(null);
+  }, [focusKey]);
   const problem = (r) => {
     if (isBlank(r)) return null;
     if (!r.date) return "Pick a date";
@@ -60,20 +95,20 @@ export function BulkAdd({ allergen, foods, entries, act, name, toast, onClose })
   return html`
     <${Sheet} title=${`Bulk add · ${allergen.name}`} onClose=${onClose} wide>
       <p class="muted small">Fill in as many lines as you need. Blank lines are skipped.</p>
-      <ol class="bulk-rows">
+      <ol class="bulk-rows" ref=${list}>
         ${rows.map((r, i) => {
           const food = foodOf(r);
           const v = parseNum(r.amount);
           const mg = v ? proteinMg(food, v) : null;
           const err = tried && problems[i];
           return html`
-            <li class=${"bulk-row card" + (err ? " has-error" : "")} key=${r.key}>
+            <li class=${"bulk-row card" + (err ? " has-error" : "")} key=${r.key} data-key=${r.key}>
               <div class="row gap">
                 <button class=${"select date-btn" + (r.date ? "" : " placeholder")} onClick=${() => setPicking(i)}>
                   ${r.date ? formatDay(r.date, { relative: false }) : "Date"}
                 </button>
                 <${FoodSelect} foods=${foods} value=${r.foodId}
-                  onChange=${(id) => change(i, { foodId: id, amount: foodOf({ foodId: id })?.scale === food?.scale ? r.amount : "" })} />
+                  onChange=${(id) => chooseFood(i, id)} />
                 ${rows.length > 1 && html`<button class="icon-btn small" aria-label="Remove line"
                   onClick=${() => setRows((rs) => rs.filter((_, j) => j !== i))}>${closeIcon()}</button>`}
               </div>
@@ -87,7 +122,7 @@ export function BulkAdd({ allergen, foods, entries, act, name, toast, onClose })
             </li>`;
         })}
       </ol>
-      <button class="btn ghost wide" onClick=${() => setRows((rs) => [...rs, blankRow(firstFood)])}>+ Add another line</button>
+      <button class="btn ghost wide" onClick=${addLine}>+ Add another line</button>
       <div class="sticky-foot">
         <button class="btn primary big wide" disabled=${!filled.length} onClick=${addAll}>
           ${filled.length ? `Add ${filled.length} ${filled.length === 1 ? "entry" : "entries"}` : "Add all"}
@@ -95,5 +130,5 @@ export function BulkAdd({ allergen, foods, entries, act, name, toast, onClose })
       </div>
     <//>
     ${picking != null && html`<${Calendar} value=${rows[picking].date} initial=${calendarStart(picking)}
-      onClose=${() => setPicking(null)} onPick=${(d) => { change(picking, { date: d }); setPicking(null); }} />`}`;
+      onClose=${() => setPicking(null)} onPick=${(d) => pickDate(picking, d)} />`}`;
 }

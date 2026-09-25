@@ -7,13 +7,15 @@
 //   households/{code}/entries/{id}    { allergenId, foodId, amount, date, time, note, by, clientTime }
 //
 // Until js/firebase-config.js is filled in, the app runs in "local mode" and
-// keeps everything in this browser only (handy for trying it out).
+// keeps everything in this browser only (handy for trying it out). Adding
+// ?local to the address does the same, for testing without touching real data.
 
 import { firebaseConfig } from "./firebase-config.js";
 
 export const COLLECTIONS = ["children", "allergens", "foods", "entries"];
 
-export const LOCAL_MODE = !firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("PASTE");
+export const LOCAL_MODE = !firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("PASTE")
+  || new URLSearchParams(location.search).has("local");
 
 const V = "10.12.2";
 const backend = LOCAL_MODE ? localBackend() : firebaseBackend();

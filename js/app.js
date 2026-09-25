@@ -57,7 +57,7 @@ function Pairing({ initialName, onJoin }) {
     <div class="pairing">
       <div class="pairing-hero">
         <${Logo} big />
-        <p>Track allergen ladders and OIT, together.</p>
+        <p>Track allergen desensitisation</p>
       </div>
       <form class="card" onSubmit=${submit}>
         <${Segmented} options=${[{ id: "new", label: "Start new" }, { id: "join", label: "I have a code" }]} value=${mode} onChange=${setMode} />

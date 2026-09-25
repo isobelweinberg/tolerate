@@ -2,7 +2,7 @@
 // Our own files are fetched fresh when online (so updates arrive straight away);
 // the pinned library files from CDNs never change, so the saved copy is used.
 
-const CACHE = "tolerate-v2";
+const CACHE = "tolerate-v3";
 const SHELL = [
   "/", "/index.html", "/css/styles.css", "/manifest.webmanifest",
   "/js/app.js", "/js/lib.js", "/js/db.js", "/js/firebase-config.js", "/js/sync.js", "/js/model.js",
