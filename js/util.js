@@ -4,7 +4,7 @@
 
 // `short` is used where space is tight (the picker when adding a food).
 export const SCALES = [
-  { id: "g", label: "Grams", short: "Grams" },
+  { id: "g", label: "Grams", short: "grams" },
   { id: "ml", label: "Millilitres", short: "ml" },
   { id: "prop", label: "Proportion", short: "Proportion" },
   { id: "tsp", label: "Teaspoons", short: "tsp" },
