@@ -1,10 +1,14 @@
 // The daily noon reminder: turning it on and off for this phone.
 //
 // A phone that turns it on is saved as households/{code}/devices/{deviceId}
-// with its push subscription; /api/remind (run daily by Vercel) sends to it.
+// with its push subscription and `muted`, the allergens this person doesn't
+// want reminding about (so ones added later are included). /api/remind (run
+// daily by Vercel) sends to it.
 
 import { html, useState, useEffect } from "./lib.js";
 import { LOCAL_MODE } from "./db.js";
+import { allergensOf } from "./model.js";
+import { AllergenBadge } from "./icons.js";
 import { storage } from "./util.js";
 
 const supported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -44,7 +48,12 @@ function notReadyReason({ missing = [], codeMismatch, error }) {
   return "Not set up yet for this share code. See SETUP_GUIDE.md.";
 }
 
-const deviceRecord = (sub, name) => ({ subscription: sub.toJSON(), name: name || null, enabled: true, updatedAt: Date.now() });
+const mutedKey = (code) => "reminderMuted." + code;
+const getMuted = (code) => storage.getJson(mutedKey(code), []);
+
+const deviceRecord = (code, sub, name) => ({
+  subscription: sub.toJSON(), name: name || null, enabled: true, muted: getMuted(code), updatedAt: Date.now(),
+});
 
 // When the app opens, re-save this phone's subscription if the browser has renewed it.
 export async function refreshReminder(code, devices, name) {
@@ -53,16 +62,17 @@ export async function refreshReminder(code, devices, name) {
     const reg = await navigator.serviceWorker.getRegistration();
     const sub = await reg?.pushManager.getSubscription();
     if (!sub || sub.endpoint === storage.get("pushEndpoint")) return;
-    devices.save(deviceId(), deviceRecord(sub, name));
+    devices.save(deviceId(), deviceRecord(code, sub, name));
     storage.set("pushEndpoint", sub.endpoint);
   } catch { /* not important enough to bother anyone about */ }
 }
 
-export function ReminderCard({ code, name, devices }) {
+export function ReminderCard({ code, name, devices, data }) {
   const [server, setServer] = useState(null); // { enabled, publicKey } once known
   const [on, setOn] = useState(() => storage.get("reminders") === code);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(null);
+  const [muted, setMuted] = useState(() => getMuted(code));
   const available = !LOCAL_MODE && !onLocalhost() && supported();
 
   useEffect(() => {
@@ -78,7 +88,7 @@ export function ReminderCard({ code, name, devices }) {
     const reg = await navigator.serviceWorker.ready;
     const sub = (await reg.pushManager.getSubscription())
       || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(server.publicKey) }));
-    devices.save(deviceId(), deviceRecord(sub, name));
+    devices.save(deviceId(), deviceRecord(code, sub, name));
     storage.set("reminders", code);
     storage.set("pushEndpoint", sub.endpoint);
   };
@@ -101,6 +111,20 @@ export function ReminderCard({ code, name, devices }) {
       setMessage({ error: true, text: err.message });
     } finally {
       setBusy(false);
+    }
+  };
+
+  // Tick or untick an allergen for this phone's reminder.
+  const choose = async (allergenId, want) => {
+    const next = want ? muted.filter((id) => id !== allergenId) : [...muted, allergenId];
+    setMuted(next);
+    storage.setJson(mutedKey(code), next);
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = await reg?.pushManager.getSubscription();
+      if (sub) devices.save(deviceId(), deviceRecord(code, sub, name));
+    } catch (err) {
+      setMessage({ error: true, text: err.message });
     }
   };
 
@@ -130,6 +154,7 @@ export function ReminderCard({ code, name, devices }) {
         <span><strong>Remind me at noon</strong><br />
           <span class="muted small">If anything hasn't been logged today, including maintenance allergens.</span></span>
       </label>
+      ${on && html`<${AllergenChoice} data=${data} muted=${muted} onChoose=${choose} />`}
       ${on && html`<button class="btn ghost small" onClick=${test} disabled=${busy}>Send a test notification</button>`}`;
   }
 
@@ -140,4 +165,27 @@ export function ReminderCard({ code, name, devices }) {
       ${body}
       ${message && html`<p class=${"small " + (message.error ? "error-text" : "muted")}>${message.text}</p>`}
     </section>`;
+}
+
+// Checkboxes for which allergens this phone gets reminded about.
+export function AllergenChoice({ data, muted, onChoose }) {
+  const children = [...data.children].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  const groups = children.map((c) => ({ child: c, allergens: allergensOf(data, c.id) })).filter((g) => g.allergens.length);
+  if (!groups.length) return null;
+  return html`
+    <div class="reminder-choice">
+      <p class="label">Remind me about</p>
+      ${groups.map(({ child, allergens }) => html`
+        ${children.length > 1 && html`<p class="reorder-child">${child.name}</p>`}
+        <ul class="check-list">
+          ${allergens.map((a) => html`
+            <li key=${a.id}>
+              <label>
+                <input type="checkbox" checked=${!muted.includes(a.id)} onChange=${(e) => onChoose(a.id, e.target.checked)} />
+                <${AllergenBadge} allergen=${a} size=${20} />
+                <span>${a.name}</span>
+              </label>
+            </li>`)}
+        </ul>`)}
+    </div>`;
 }

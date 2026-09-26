@@ -51,7 +51,7 @@ export function SettingsScreen({ code, name, data, act, sync, devices, onRename,
         <input value=${name} onChange=${(e) => onRename(e.target.value.trim())} placeholder="e.g. Mum" />
       </section>
 
-      <${ReminderCard} code=${code} name=${name} devices=${devices} />
+      <${ReminderCard} code=${code} name=${name} devices=${devices} data=${data} />
 
       <section class="card">
         <h3>Share code</h3>

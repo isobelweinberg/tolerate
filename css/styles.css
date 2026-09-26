@@ -391,6 +391,7 @@ select, .select {
 .log-card .amount-input, .log-card .prop-grid { margin-bottom: 14px; }
 .last-given { color: var(--muted); font-size: 0.9rem; padding: 0 4px; }
 .last-given strong { color: var(--ink); }
+.warn-icon { color: #e08a00; vertical-align: -3px; margin-right: 2px; }
 
 /* History */
 .day-head {
@@ -441,6 +442,24 @@ select, .select {
 .chart-box .dot { fill: var(--blue); stroke: #fff; stroke-width: 2; }
 .chart-box .dot.on { fill: var(--pink); }
 .chart-box .crosshair { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+
+/* Reminder allergen choice */
+.reminder-choice { margin: 4px 0 10px; }
+.check-list { list-style: none; padding: 0; margin: 0 0 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+.check-list label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px 6px 8px;
+  border: 2px solid var(--blue-soft);
+  border-radius: 999px;
+  color: var(--blue);
+  font-weight: 600;
+  cursor: pointer;
+}
+.check-list label span { color: var(--ink); }
+.check-list input { width: 18px; height: 18px; margin: 0; accent-color: var(--blue); }
+.check-list label:has(input:not(:checked)) { opacity: 0.55; }
 
 /* Allergen order */
 .reorder { list-style: none; padding: 0; margin: 0 0 6px; }

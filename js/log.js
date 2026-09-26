@@ -95,7 +95,7 @@ export function LogPanel({ allergen, foods, entries, act, name, toast, openBulk 
     </div>
 
     ${last && html`<p class="last-given">
-      Last given <strong>${formatDay(last.date).toLowerCase()}${last.time ? ` at ${last.time}` : ""}</strong>:
+      ${last.note && html`<${WarningIcon} title=${`Reaction noted: ${last.note}`} />${" "}`}Last given <strong>${formatDay(last.date).toLowerCase()}${last.time ? ` at ${last.time}` : ""}</strong>:
       ${" "}${formatAmount(lastFood, last.amount)} ${lastFood?.name}
       ${proteinMg(lastFood, last.amount) != null ? ` (${formatMg(proteinMg(lastFood, last.amount))})` : ""}
     </p>`}
@@ -110,6 +110,15 @@ export function LogPanel({ allergen, foods, entries, act, name, toast, openBulk 
         <${FoodForm} allergen=${allergen} act=${act} onDone=${(id) => { pickNew(id); setAddingFood(false); }} />
       <//>`}`;
 }
+
+// Amber triangle with "!", shown where a dose had a reaction noted.
+export const WarningIcon = ({ title }) => html`
+  <svg class="warn-icon" width="17" height="17" viewBox="0 0 24 24" role="img" aria-label=${title}>
+    <title>${title}</title>
+    <path d="M10.3 3.9L2.2 18a2 2 0 0 0 1.7 3h16.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" fill="currentColor" />
+    <path d="M12 9v4.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" />
+    <circle cx="12" cy="17" r="1.25" fill="#fff" />
+  </svg>`;
 
 export function FoodSelect({ foods, value, onChange }) {
   return html`<select class="select grow" value=${value || ""} onChange=${(e) => onChange(e.target.value)}>

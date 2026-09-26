@@ -74,22 +74,28 @@ async function sendDaily(code, date) {
     db.list("children"), db.list("allergens"), db.entriesOn(date), db.list("devices"),
   ]);
   const given = new Set(entries.map((e) => e.allergenId));
-  const lines = children
+  const missing = allergens.filter((a) => !given.has(a.id));
+  if (!missing.length) return { sent: 0, reason: "Everything logged" };
+
+  // Each phone hears only about the allergens it hasn't switched off.
+  const linesFor = (muted = []) => children
     .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
     .map((child) => {
-      const missing = allergens
-        .filter((a) => a.childId === child.id && !given.has(a.id))
+      const names = missing
+        .filter((a) => a.childId === child.id && !muted.includes(a.id))
         .sort((a, b) => (a.order ?? a.createdAt ?? 0) - (b.order ?? b.createdAt ?? 0))
         .map((a) => a.name);
-      return missing.length ? `${child.name}: ${missing.join(", ")}` : null;
+      return names.length ? `${child.name}: ${names.join(", ")}` : null;
     })
     .filter(Boolean);
 
-  if (!lines.length) return { sent: 0, reason: "Everything logged" };
-  const message = { title: "Not logged yet today", body: lines.join("\n"), tag: "tolerate-daily" };
-  const targets = devices.filter((d) => d.enabled && d.subscription);
-  const results = await Promise.allSettled(targets.map((d) => push(db, d, message)));
-  return { sent: results.filter((r) => r.status === "fulfilled").length, of: targets.length, date, lines };
+  const sends = devices
+    .filter((d) => d.enabled && d.subscription)
+    .map((d) => ({ device: d, lines: linesFor(d.muted) }))
+    .filter((s) => s.lines.length);
+  const results = await Promise.allSettled(sends.map(({ device, lines }) =>
+    push(db, device, { title: "Not logged yet today", body: lines.join("\n"), tag: "tolerate-daily" })));
+  return { sent: results.filter((r) => r.status === "fulfilled").length, of: sends.length, date };
 }
 
 // Sends one notification. Phones that have gone away are removed.
