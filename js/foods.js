@@ -3,7 +3,7 @@
 import { html, useState } from "./lib.js";
 import { Sheet, ConfirmButton } from "./ui.js";
 import { FoodForm } from "./log.js";
-import { formatAmount, formatDay, scaleDescription, trimNum } from "./util.js";
+import { formatAmount, formatDay, scaleDescription, trimNum, hasProteinScale, per100 } from "./util.js";
 
 export function FoodsPanel({ allergen, foods, entries, act }) {
   const [editing, setEditing] = useState(null); // a food, or "new"
@@ -22,7 +22,7 @@ export function FoodsPanel({ allergen, foods, entries, act }) {
             </div>
             <p class="muted small">
               ${scaleDescription(f)}
-              ${f.scale === "g" && f.proteinPct != null && html` · <strong class="pink">${trimNum(f.proteinPct, 3)}% protein</strong>`}
+              ${hasProteinScale(f.scale) && f.proteinPct != null && html` · <strong class="pink">${trimNum(f.proteinPct, 3)} g protein ${per100(f.scale)}</strong>`}
             </p>
             <p class="small">
               ${given.length

@@ -3,7 +3,7 @@
 // Data layout (all under the shared household code):
 //   households/{code}/children/{id}   { name, createdAt }
 //   households/{code}/allergens/{id}  { childId, name, icon, maintenance, createdAt }
-//   households/{code}/foods/{id}      { allergenId, name, scale, unit, proteinPct, createdAt }
+//   households/{code}/foods/{id}      { allergenId, name, scale, unit, proteinPct (g per 100 g or ml), createdAt }
 //   households/{code}/entries/{id}    { allergenId, foodId, amount, date, time, note, by, clientTime }
 //   households/{code}/devices/{id}    { subscription, name, enabled, updatedAt }  <- phones with the daily reminder on
 //

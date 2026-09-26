@@ -5,6 +5,7 @@ import { Sheet, AmountInput, ScalePicker } from "./ui.js";
 import { defaultFoodId, lastAmountText } from "./model.js";
 import {
   dayKey, timeKey, formatDay, formatAmount, cleanAmount, formatMg, parseNum, proteinMg, scaleDescription, trimNum,
+  hasProteinScale, per100,
 } from "./util.js";
 
 export function LogPanel({ allergen, foods, entries, act, name, toast, openBulk }) {
@@ -68,8 +69,8 @@ export function LogPanel({ allergen, foods, entries, act, name, toast, openBulk 
           <${FoodSelect} foods=${foods} value=${foodId} onChange=${setFoodId} />
           <button class="btn ghost small nowrap" onClick=${() => setAddingFood(true)}>+ New</button>
         </div>
-        ${food && html`<span class="hint">${scaleDescription(food)}${food.scale === "g" && food.proteinPct != null
-          ? ` · ${trimNum(food.proteinPct, 3)}% ${allergen.name.toLowerCase()} protein` : ""}</span>`}
+        ${food && html`<span class="hint">${scaleDescription(food)}${hasProteinScale(food.scale) && food.proteinPct != null
+          ? ` · ${trimNum(food.proteinPct, 3)} g ${allergen.name.toLowerCase()} protein ${per100(food.scale)}` : ""}</span>`}
       </div>
 
       <label class="field" for="amount">
@@ -78,7 +79,7 @@ export function LogPanel({ allergen, foods, entries, act, name, toast, openBulk 
       <${AmountInput} id="amount" food=${food} value=${amount} onInput=${setAmount} />
       ${amount !== "" && value == null && html`<p class="error-text">Enter a number, like 2.5</p>`}
 
-      ${food?.scale === "g" && food.proteinPct != null && html`
+      ${hasProteinScale(food?.scale) && food.proteinPct != null && html`
         <div class=${"protein" + (mg == null ? " dim" : "")}>
           <span class="protein-value">${mg == null ? "–" : formatMg(mg)}</span>
           <span class="protein-label">${allergen.name.toLowerCase()} protein</span>
@@ -116,7 +117,8 @@ export function FoodSelect({ foods, value, onChange }) {
   </select>`;
 }
 
-// Add a food, or edit one (name and protein % only: the scale is fixed once created).
+// Add a food, or edit one (name and protein content only: the scale is fixed once created).
+// Protein is grams of allergen protein per 100 g or 100 ml (stored as `proteinPct`).
 export function FoodForm({ allergen, food, act, onDone, inline = false }) {
   const [name, setName] = useState(food?.name ?? "");
   const [scale, setScale] = useState(food?.scale ?? "g");
@@ -129,7 +131,7 @@ export function FoodForm({ allergen, food, act, onDone, inline = false }) {
   const submit = (e) => {
     e.preventDefault();
     if (!ok) return;
-    const proteinPct = scale === "g" && pctValue != null ? pctValue : null;
+    const proteinPct = hasProteinScale(scale) && pctValue != null ? pctValue : null;
     if (food) {
       act.update("foods", food.id, { name: name.trim(), proteinPct });
       onDone(food.id);
@@ -161,16 +163,16 @@ export function FoodForm({ allergen, food, act, onDone, inline = false }) {
       ${!food && scale === "custom" && html`
         <label class="field">
           <span class="label">Unit name</span>
-          <input value=${unit} onInput=${(e) => setUnit(e.target.value)} placeholder="e.g. ml, biscuits, drops" />
+          <input value=${unit} onInput=${(e) => setUnit(e.target.value)} placeholder="e.g. biscuits, drops, sachets" />
         </label>`}
-      ${scale === "g" && html`
+      ${hasProteinScale(scale) && html`
         <label class="field">
-          <span class="label">${allergen.name} protein % <span class="muted">(optional)</span></span>
+          <span class="label">${allergen.name} protein ${per100(scale)} <span class="muted">(optional)</span></span>
           <div class="amount-input">
-            <input type="text" inputmode="decimal" value=${pct} onInput=${(e) => setPct(e.target.value)} placeholder="e.g. 2.5" />
-            <span class="unit">%</span>
+            <input type="text" inputmode="decimal" value=${pct} onInput=${(e) => setPct(e.target.value)} placeholder=${scale === "ml" ? "e.g. 3.4" : "e.g. 2.5"} />
+            <span class="unit">g</span>
           </div>
-          ${pctBad && html`<span class="error-text">Enter a percentage between 0 and 100</span>`}
+          ${pctBad && html`<span class="error-text">Enter an amount between 0 and 100 g</span>`}
           <span class="hint">Used to work out mg of ${allergen.name.toLowerCase()} protein per dose.${food ? " Changing it updates past entries too." : ""}</span>
         </label>`}
       <button class="btn primary" type="submit" disabled=${!ok}>${food ? "Save changes" : "Add food"}</button>

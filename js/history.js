@@ -208,6 +208,6 @@ function ProteinChart({ points: all, allergen }) {
           ${shown.map((p) => html`<circle class=${"dot" + (p === active ? " on" : "")} cx=${x(p.date)} cy=${y(p.mg)} r=${p === active ? 5 : 3.5} />`)}
         </svg>
       </div>
-      <p class="muted small">Only foods measured in grams with a protein % are included. Tap the chart to read a day.</p>
+      <p class="muted small">Only foods measured in grams or ml with a protein amount are included. Tap the chart to read a day.</p>
     </div>`;
 }

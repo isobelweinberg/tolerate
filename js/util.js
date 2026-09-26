@@ -2,12 +2,20 @@
 
 // --- Scales ------------------------------------------------------------------
 
+// `short` is used where space is tight (the picker when adding a food).
 export const SCALES = [
-  { id: "g", label: "Grams" },
-  { id: "prop", label: "Proportion" },
-  { id: "tsp", label: "Teaspoons" },
-  { id: "custom", label: "Custom" },
+  { id: "g", label: "Grams", short: "Grams" },
+  { id: "ml", label: "Millilitres", short: "ml" },
+  { id: "prop", label: "Proportion", short: "Proportion" },
+  { id: "tsp", label: "Teaspoons", short: "tsp" },
+  { id: "custom", label: "Custom", short: "Custom" },
 ];
+
+// Grams and millilitres can have "allergen protein per 100 g / 100 ml", and so an mg estimate.
+export const hasProteinScale = (scale) => scale === "g" || scale === "ml";
+
+// "per 100 g" or "per 100 ml".
+export const per100 = (scale) => `per 100 ${scale === "ml" ? "ml" : "g"}`;
 
 export const PROPORTIONS = [
   { value: 1 / 8, label: "⅛" },
@@ -28,6 +36,7 @@ export const propLabel = (value) =>
 export function unitOf(food) {
   if (!food) return "";
   if (food.scale === "g") return "g";
+  if (food.scale === "ml") return "ml";
   if (food.scale === "tsp") return "tsp";
   if (food.scale === "custom") return food.unit || "";
   return "";
@@ -60,10 +69,11 @@ export function parseNum(text) {
 
 export const round2 = (n) => Math.round(n * 100) / 100;
 
-// Allergen protein in mg. Only grams-based foods with a known % have one.
-// grams × (percent / 100) × 1000 mg/g  =  grams × percent × 10
+// Allergen protein in mg, for foods in grams or ml with a known protein content.
+// `proteinPct` is grams of allergen protein per 100 g (or per 100 ml), so
+// amount × (proteinPct / 100) g × 1000 mg/g  =  amount × proteinPct × 10
 export function proteinMg(food, amount) {
-  if (!food || food.scale !== "g" || food.proteinPct == null || amount == null) return null;
+  if (!food || !hasProteinScale(food.scale) || food.proteinPct == null || amount == null) return null;
   return amount * food.proteinPct * 10;
 }
 
@@ -121,7 +131,7 @@ export const toCsv = (rows) => rows.map((r) => r.map(csvCell).join(",")).join("\
 
 // One row per entry, as used by both the CSV export and the Google Sheet.
 export const ENTRY_HEADER = [
-  "Date", "Time", "Food", "Amount", "Unit", "Protein %", "Allergen protein (mg)", "Reaction / notes", "Recorded by",
+  "Date", "Time", "Food", "Amount", "Unit", "Protein (g per 100 g or ml)", "Allergen protein (mg)", "Reaction / notes", "Recorded by",
 ];
 
 export function entryRow(entry, food) {
@@ -132,7 +142,7 @@ export function entryRow(entry, food) {
     food?.name ?? "(deleted food)",
     food?.scale === "prop" ? propLabel(entry.amount) : entry.amount,
     food?.scale === "prop" ? "portion" : unitOf(food),
-    food?.scale === "g" && food.proteinPct != null ? food.proteinPct : "",
+    hasProteinScale(food?.scale) && food.proteinPct != null ? food.proteinPct : "",
     mg == null ? "" : round2(mg),
     entry.note || "",
     entry.by || "",

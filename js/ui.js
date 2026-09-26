@@ -101,7 +101,7 @@ export function Segmented({ options, value, onChange, small = false }) {
 }
 
 export const ScalePicker = ({ value, onChange }) =>
-  html`<${Segmented} options=${SCALES} value=${value} onChange=${onChange} small />`;
+  html`<${Segmented} options=${SCALES.map((s) => ({ id: s.id, label: s.short }))} value=${value} onChange=${onChange} small />`;
 
 // Amount entry that fits the food's scale. `value` is the text typed (or, for
 // proportions, the chosen number as text).

@@ -5,9 +5,9 @@ programmes (OIT, egg and milk ladders), shared between parents with a share code
 
 - **Allergens** per child, each with an optional icon, and a green tick for maintenance.
   They stay in an order you set by dragging in Settings, and the app opens on the last one used.
-- **Foods** per allergen, measured in grams, proportions, teaspoons or a custom unit.
-  For grams, an optional **protein %** gives a live **mg of allergen protein** for each dose
-  (grams × % × 10).
+- **Foods** per allergen, measured in grams, millilitres, proportions, teaspoons or a custom unit.
+  For grams and ml, an optional **protein per 100 g / 100 ml** gives a live **mg of allergen
+  protein** for each dose (amount × protein per 100 × 10).
 - **Log** a dose now (defaults to the last food and amount), with a reaction note.
 - **Bulk add** past entries by date. Each line's calendar opens on the date above.
 - **History** per allergen with a protein-per-day chart. Tap an entry to edit or delete it.
