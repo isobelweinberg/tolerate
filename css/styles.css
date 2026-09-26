@@ -471,6 +471,30 @@ select, .select {
 .drag-handle:active { cursor: grabbing; background: var(--blue-soft); }
 .reorder-child { margin: 10px 0 6px; font-size: 0.85rem; color: var(--muted); }
 
+/* Reference table */
+.ref-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; margin-bottom: 8px; }
+.ref-table thead th {
+  position: sticky;
+  top: -8px;
+  background: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: right;
+  padding: 6px 10px 8px;
+  border-bottom: 2px solid var(--blue-line);
+}
+.ref-table thead th:first-child, .ref-table td:first-child { text-align: left; }
+.ref-table td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--blue-soft); }
+.ref-table .ref-dose { font-weight: 700; color: var(--pink-deep); }
+.ref-phase th {
+  text-align: left;
+  padding: 14px 10px 6px;
+  color: var(--blue);
+  font-size: 0.95rem;
+  border-bottom: 1px solid var(--blue-line);
+}
+
 /* Foods */
 .food-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .food-card p { margin-bottom: 6px; }

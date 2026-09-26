@@ -2,12 +2,12 @@
 // Our own files are fetched fresh when online (so updates arrive straight away);
 // the pinned library files from CDNs never change, so the saved copy is used.
 
-const CACHE = "tolerate-v5";
+const CACHE = "tolerate-v6";
 const SHELL = [
   "/", "/index.html", "/css/styles.css", "/manifest.webmanifest",
   "/js/app.js", "/js/lib.js", "/js/db.js", "/js/firebase-config.js", "/js/sync.js", "/js/model.js",
   "/js/util.js", "/js/icons.js", "/js/ui.js", "/js/log.js", "/js/history.js", "/js/bulk.js",
-  "/js/foods.js", "/js/allergens.js", "/js/settings.js", "/js/reminders.js",
+  "/js/foods.js", "/js/allergens.js", "/js/settings.js", "/js/reminders.js", "/js/reference.js",
   "/icons/icon.svg", "/icons/icon-192.png", "/icons/badge-96.png",
 ];
 const CDN_HOSTS = ["cdn.jsdelivr.net", "www.gstatic.com", "fonts.googleapis.com", "fonts.gstatic.com"];
