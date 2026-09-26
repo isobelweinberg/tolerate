@@ -413,7 +413,6 @@ select, .select {
   padding: 11px 16px;
 }
 .entry:hover { background: #f8f9ff; }
-.entry-time { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; width: 44px; flex: none; }
 .entry-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .entry-food { font-weight: 700; overflow-wrap: anywhere; }
 .entry-amount { color: var(--muted); }

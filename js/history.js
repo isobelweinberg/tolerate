@@ -49,7 +49,6 @@ export function HistoryPanel({ allergen, foods, entries, act }) {
               return html`
                 <li key=${e.id}>
                   <button class="entry" onClick=${() => setEditing(e)}>
-                    <span class="entry-time">${e.time || ""}</span>
                     <span class="entry-main">
                       <span class="entry-food">${food?.name ?? "Deleted food"}</span>
                       <span class="entry-amount">${formatAmount(food, e.amount)}${mg != null && html` · <strong>${formatMg(mg)}</strong>`}</span>
